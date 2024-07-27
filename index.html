@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Drawing App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        h3 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #map {
+            height: 500px;
+            width: 80%;
+            max-width: 1000px;
+            margin-top: 20px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+
+        #draw-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #draw-button:hover {
+            background-color: #0056b3;
+        }
+
+        #area {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h3>Map Drawing App</h3>
+    <button id="draw-button">Draw Rectangle</button>
+    <div id="map"></div>
+    <p id="area"></p>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([51.505, -0.09], 13);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Initialize the FeatureGroup to store editable layers
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        // Initialize the draw control and pass it the FeatureGroup of editable layers
+        const drawControl = new L.Control.Draw({
+            draw: {
+                polyline: false,
+                polygon: false,
+                circle: false,
+                marker: false,
+                circlemarker: false,
+                rectangle: true
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            }
+        });
+
+        map.addControl(drawControl);
+
+        // Handle the draw:created event
+        map.on(L.Draw.Event.CREATED, function (event) {
+            const layer = event.layer;
+            drawnItems.addLayer(layer);
+
+            const type = event.layerType;
+            if (type === 'rectangle') {
+                const bounds = layer.getBounds();
+                const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                document.getElementById('area').innerText = `Area: ${area.toFixed(2)} square meters`;
+            }
+        });
+
+        // Add functionality to the draw button
+        document.getElementById('draw-button').addEventListener('click', function () {
+            new L.Draw.Rectangle(map, drawControl.options.draw.rectangle).enable();
+        });
+    </script>
+</body>
+</html>
